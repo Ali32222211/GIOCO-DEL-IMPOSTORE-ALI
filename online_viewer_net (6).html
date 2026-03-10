@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gioco dell'Impostore</title>
+    <style>
+        :root {
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.6);
+            --danger: #ff2a5f;
+            --danger-glow: rgba(255, 42, 95, 0.6);
+            --success: #00ff9d;
+            --success-glow: rgba(0, 255, 157, 0.6);
+            --bg: #000000;
+            --surface: rgba(20, 22, 28, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            perspective: 1500px;
+        }
+
+        /* Effetti particellari/Sfere di luce */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            z-index: -1;
+            animation: pulseOrb 10s infinite alternate ease-in-out;
+        }
+        .orb-1 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            top: -15%; left: -10%;
+        }
+        .orb-2 {
+            width: 350px; height: 350px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, transparent 70%);
+            bottom: -15%; right: -10%;
+            animation-delay: -3s;
+        }
+
+        @keyframes pulseOrb {
+            0% { transform: scale(0.8) translate(0, 0); opacity: 0.7; }
+            100% { transform: scale(1.2) translate(30px, -30px); opacity: 1; }
+        }
+
+        /* Contenitore Principale 4D */
+        .container {
+            background: var(--surface);
+            backdrop-filter: blur(35px);
+            -webkit-backdrop-filter: blur(35px);
+            border: 1px solid var(--glass-border);
+            padding: 2.5rem;
+            border-radius: 30px;
+            width: 90%;
+            max-width: 420px;
+            text-align: center;
+            box-shadow: 
+                0 50px 100px rgba(0, 0, 0, 0.95),
+                0 15px 35px rgba(0, 0, 0, 0.6),
+                inset 0 2px 3px rgba(255, 255, 255, 0.2),
+                inset 0 -3px 6px rgba(0, 0, 0, 0.5);
+            transform-style: preserve-3d;
+            transition: transform 0.2s ease-out, opacity 0.5s;
+            animation: floatCard 8s infinite ease-in-out;
+        }
+
+        @keyframes floatCard {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        h1 { 
+            font-size: 2.2rem; 
+            letter-spacing: -1px; 
+            margin-bottom: 1.5rem;
+            color: #fff;
+            text-shadow: 0 4px 20px rgba(255,255,255,0.5);
+            transform: translateZ(40px);
+        }
+
+        /* Input e Liste */
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            transform: translateZ(20px);
+        }
+
+        input {
+            flex-grow: 1;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 14px;
+            color: white;
+            font-size: 1.05rem;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.6);
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.6), 0 0 15px var(--accent-glow);
+        }
+
+        .add-btn {
+            width: 50px;
+            padding: 0;
+            font-size: 1.8rem;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .players-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            padding: 0 5px;
+            transform: translateZ(25px);
+        }
+
+        .chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            min-height: 40px;
+            transform: translateZ(25px);
+        }
+
+        .chip {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.2s;
+        }
+
+        .chip:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        .chip-del {
+            color: var(--danger);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Bottoni */
+        button {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, #4f46e5, var(--accent));
+            color: white;
+            font-weight: 700;
+            font-size: 1.05rem;
+            cursor: pointer;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4), inset 0 2px 2px rgba(255,255,255,0.4);
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: translateZ(30px);
+        }
+
+        button.secondary { background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); }
+        button.danger-outline {
+            background: transparent;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            width: auto;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 8px;
+            box-shadow: none;
+            transform: none;
+            text-shadow: none;
+        }
+        button.danger-outline:hover { background: rgba(255, 42, 95, 0.1); transform: translateY(-2px); }
+
+        button:hover:not(.danger-outline) { transform: translateY(-3px) translateZ(30px); filter: brightness(1.15); }
+        button:active:not(.danger-outline) { transform: translateY(2px) translateZ(15px); }
+
+        .role-card {
+            padding: 3rem 1rem;
+            border-radius: 24px;
+            margin: 1.5rem 0;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid var(--glass-border);
+            box-shadow: inset 0 5px 25px rgba(0,0,0,0.9);
+            transform: translateZ(20px);
+        }
+
+        .hidden { display: none !important; }
+
+        .role-title { 
+            font-size: 2.8rem; 
+            font-weight: 900; 
+            margin-bottom: 15px; 
+            letter-spacing: 4px; 
+            text-transform: uppercase;
+        }
+
+        .word-reveal { font-size: 1.3rem; color: #cbd5e1; }
+
+        .player-badge {
+            font-size: 2.2rem;
+            color: var(--accent);
+            font-weight: 900;
+            margin-bottom: 30px;
+            text-shadow: 0 0 25px var(--accent-glow);
+            transform: translateZ(50px);
+        }
+        
+        .glitch-text { animation: neonPulse 1.5s infinite alternate; }
+        @keyframes neonPulse {
+            from { text-shadow: 0 0 10px var(--danger-glow), 0 0 20px var(--danger); }
+            to { text-shadow: 0 0 20px var(--danger-glow), 0 0 40px var(--danger), 0 0 60px #fff; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="container" id="main-card">
+    <div id="setup">
+        <h1>🕵️ Gioco dell'Impostore</h1>
+        
+        <div class="input-row">
+            <input type="text" id="playerName" placeholder="Nome giocatore..." onkeypress="handleEnter(event)">
+            <button class="add-btn secondary" onclick="addPlayer()">+</button>
+        </div>
+
+        <div class="players-header" id="playersHeader" class="hidden">
+            <span style="color: #94a3b8; font-size: 0.9rem;">Giocatori nella stanza:</span>
+            <button class="danger-outline" onclick="clearPlayers()">🗑️ Svuota</button>
+        </div>
+        
+        <div id="chipsContainer" class="chips-container"></div>
+        
+        <div class="input-row" style="margin-top: 15px;">
+            <input type="text" id="secretWord" placeholder="Parola Segreta...">
+            <button class="secondary add-btn" id="btnRandom" onclick="setRandomWord()" title="Parola Casuale">🎲</button>
+        </div>
+        
+        <button style="margin-top:10px" onclick="initGame()">Inizia Partita 🚀</button>
+    </div>
+
+    <div id="pass" class="hidden">
+        <p style="color: #94a3b8; font-size: 1.2rem; margin-bottom: 20px; transform: translateZ(20px);">Passa il telefono a:</p>
+        <div class="player-badge" id="nextName">---</div>
+        <button onclick="revealRole()">Rivela Identità 👁️</button>
+    </div>
+
+    <div id="reveal" class="hidden">
+        <div class="role-card">
+            <div id="roleTitle" class="role-title">RUOLO</div>
+            <div id="wordInfo" class="word-reveal">---</div>
+        </div>
+        <button onclick="confirmAndNext()">Nascondi e Passa ✔️</button>
+    </div>
+
+    <div id="game-on" class="hidden">
+        <h1 style="color: var(--success); text-shadow: 0 0 25px var(--success-glow);">Iniziate a Parlare!</h1>
+        <p style="color: #cbd5e1; font-size: 1.2rem; line-height: 1.6; transform: translateZ(20px);">C'è <b>un solo</b> infiltrato tra voi.<br>Fate un giro di descrizioni!</p>
+        <button onclick="location.reload()" class="secondary" style="margin-top: 30px;">Termina Partita 🔄</button>
+    </div>
+</div>
+
+<script>
+    const wordBank = [
+        // Nuove aggiunte Meme/Internet
+        "Zucchina", "Cookie", "Zebbys", "67", "Ohio", "Sigma", "Epstin",
+        // Originali
+        "Leone", "Tigre", "Elefante", "Giraffa", "Scimmia", "Delfino", "Squalo", "Polpo", "Pinguino", "Aquila", "Serpente", "Unicorno", "Lupo", "Orso", "Camaleonte", "Ragno",
+        "Mela", "Banana", "Fragola", "Anguria", "Limone", "Pomodoro", "Patata", "Pane", "Pasta", "Pizza", "Sushi", "Kebab", "Hamburger", "Cioccolato", "Biscotto", "Gelato", "Caffè", "Vino", "Birra", "Formaggio",
+        "Computer", "Telefono", "Televisione", "Orologio", "Fotocamera", "Chitarra", "Tastiera", "Frigorifero", "Lavatrice", "Divano", "Letto", "Specchio", "Cuscino", "Coltello", "Bicchiere", "Zaino", "Ombrello", "Chiave",
+        "Macchina", "Moto", "Bicicletta", "Aereo", "Treno", "Nave", "Barca", "Elicottero", "Autobus", "Ambulanza", "Trattore", "Sottomarino",
+        "Scuola", "Ospedale", "Supermercato", "Ristorante", "Cinema", "Teatro", "Museo", "Palestra", "Stadio", "Piscina", "Foresta", "Montagna", "Deserto", "Spiaggia", "Castello", "Grattacielo", "Colosseo", "Piramide",
+        "Internet", "Bitcoin", "Astronauta", "Vampiro", "Fantasma", "Alieno", "Dinosauro", "Spazio", "Tempo", "Amore", "Sogno", "Magia", "Sole", "Luna", "Stella", "Galassia", "Fuoco", "Ghiaccio"
+    ];
+    
+    let players = [];
+    let word = "";
+    let impostorIdx = -1;
+    let currentIdx = 0;
+
+    // --- Inizializzazione e Caricamento Nomi ---
+    window.onload = () => {
+        const savedPlayers = localStorage.getItem('impostor_players');
+        if (savedPlayers) {
+            players = JSON.parse(savedPlayers);
+            renderChips();
+        }
+    };
+
+    function savePlayers() {
+        localStorage.setItem('impostor_players', JSON.stringify(players));
+    }
+
+    // --- Sistema di Input Giocatori ---
+    function handleEnter(e) {
+        if (e.key === 'Enter') addPlayer();
+    }
+
+    function addPlayer() {
+        const input = document.getElementById('playerName');
+        const name = input.value.trim();
+        if (name && !players.includes(name)) {
+            players.push(name);
+            savePlayers(); 
+            input.value = "";
+            renderChips();
+        }
+        input.focus();
+    }
+
+    function removePlayer(index) {
+        players.splice(index, 1);
+        savePlayers(); 
+        renderChips();
+    }
+
+    function clearPlayers() {
+        players = [];
+        savePlayers();
+        renderChips();
+    }
+
+    function renderChips() {
+        const container = document.getElementById('chipsContainer');
+        const header = document.getElementById('playersHeader');
+        container.innerHTML = "";
+        
+        if(players.length > 0) {
+            header.style.display = "flex";
+        } else {
+            header.style.display = "none";
+        }
+
+        players.forEach((p, i) => {
+            container.innerHTML += `<div class="chip">${p} <span class="chip-del" onclick="removePlayer(${i})">×</span></div>`;
+        });
+    }
+
+    function setRandomWord() {
+        const random = wordBank[Math.floor(Math.random() * wordBank.length)];
+        const input = document.getElementById('secretWord');
+        input.value = random;
+        input.type = "password"; 
+        
+        const btn = document.getElementById('btnRandom');
+        btn.innerText = "✅";
+        btn.style.background = "var(--success)";
+        setTimeout(() => { btn.innerText = "🎲"; btn.style.background = "rgba(255,255,255,0.1)"; }, 1500);
+    }
+
+    function initGame() {
+        word = document.getElementById('secretWord').value.trim();
+        
+        if (players.length < 3) return alert("Aggiungi almeno 3 giocatori!");
+        if (!word) return alert("Scegli o genera una parola segreta!");
+
+        impostorIdx = Math.floor(Math.random() * players.length);
+        transition('setup', 'pass');
+        updatePassScreen();
+    }
+
+    function updatePassScreen() {
+        document.getElementById('nextName').innerText = players[currentIdx];
+    }
+
+    function revealRole() {
+        const isImpostor = currentIdx === impostorIdx;
+        const title = document.getElementById('roleTitle');
+        const info = document.getElementById('wordInfo');
+
+        if (isImpostor) {
+            title.innerText = "IMPOSTORE";
+            title.style.color = "var(--danger)";
+            title.className = "role-title glitch-text"; 
+            info.innerHTML = "🕵️‍♂️ Sei l'Infiltrato!<br>Ascolta gli altri e fingi di sapere.";
+        } else {
+            title.innerText = "INNOCENTE";
+            title.style.color = "var(--success)";
+            title.className = "role-title";
+            title.style.textShadow = "0 0 25px var(--success-glow)";
+            info.innerHTML = `La parola è:<br><b style="color:white; font-size:2rem; display:block; margin-top:20px; text-shadow: 0 5px 15px rgba(255,255,255,0.4);">${word}</b>`;
+        }
+        transition('pass', 'reveal');
+    }
+
+    function confirmAndNext() {
+        currentIdx++;
+        if (currentIdx < players.length) {
+            updatePassScreen();
+            transition('reveal', 'pass');
+        } else {
+            transition('reveal', 'game-on');
+        }
+    }
+
+    function transition(from, to) {
+        const card = document.getElementById('main-card');
+        card.style.transform = 'translateY(50px) scale(0.8) rotateX(-15deg)';
+        card.style.opacity = '0';
+        
+        setTimeout(() => {
+            document.getElementById(from).classList.add('hidden');
+            document.getElementById(to).classList.remove('hidden');
+            card.style.transform = 'translateY(0) scale(1) rotateX(0)';
+            card.style.opacity = '1';
+        }, 350); 
+    }
+
+    document.addEventListener('mousemove', (e) => {
+        const card = document.getElementById('main-card');
+        if(card.style.opacity === '0') return; 
+        
+        const xAxis = (window.innerWidth / 2 - e.pageX) / 35;
+        const yAxis = (window.innerHeight / 2 - e.pageY) / 35;
+        
+        card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+    });
+</script>
+
+</body>
+</html>
